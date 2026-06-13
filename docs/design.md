@@ -9,9 +9,9 @@ scripts route directly to named work contexts.
 Keyroute is not an app switcher. It is a target resolver.
 
 ```sh
-keyroute go tmux.default-browser
-keyroute go zen.github
-keyroute go codex.default-browser
+keyroute go tmux.project-alpha
+keyroute go browser.primary.docs
+keyroute go app.editor.project-alpha
 ```
 
 Input stays outside Keyroute:
@@ -59,10 +59,10 @@ name where the first segment indicates the adapter family:
 Examples:
 
 ```text
-tmux.default-browser         # adapter family: tmux
-browser.zen.github           # adapter family: browser, browser: zen
-macos-window.codex.default   # adapter family: macos-window
-command.opencode.default     # adapter family: command
+tmux.project-alpha         # adapter family: tmux
+browser.primary.docs       # adapter family: browser, browser: primary
+macos-window.editor.project # adapter family: macos-window
+command.tool.default       # adapter family: command
 ```
 
 The first segment is a convention, not enforced syntax. The actual adapter is
@@ -87,41 +87,41 @@ Example:
 
 ```yaml
 aliases:
-  db: profile.default-browser
-  reef: profile.reef
-  zgh: browser.zen.github
-  tdb: tmux.default-browser
+  db: profile.project-alpha
+  beta: profile.project-beta
+  docs: target.browser.primary.docs
+  alpha: target.tmux.project-alpha
 
 targets:
-  tmux.default-browser:
+  tmux.project-alpha:
     adapter: tmux
-    app: com.mitchellh.ghostty
-    session: default-browser
-    cwd: ~/projects/default-browser
+    app: com.example.Terminal
+    session: project-alpha
+    cwd: ~/work/project-alpha
     create: true
 
-  browser.helium.default-browser:
+  browser.secondary.project-alpha:
     adapter: chromium
-    browser: helium
-    workspace: default-browser
+    browser: secondary
+    workspace: project-alpha
 
-  browser.zen.github:
+  browser.primary.docs:
     adapter: chromium
-    browser: zen
-    workspace: github
+    browser: primary
+    workspace: docs
 
-  codex.default-browser:
+  app.editor.project-alpha:
     adapter: macos-window
-    app: com.openai.codex
-    titleContains: default-browser
+    app: com.example.Editor
+    titleContains: project-alpha
 
 profiles:
-  default-browser:
+  project-alpha:
     targets:
-      - browser.helium.default-browser
-      - tmux.default-browser
-      - codex.default-browser
-    default: tmux.default-browser
+      - browser.secondary.project-alpha
+      - tmux.project-alpha
+      - app.editor.project-alpha
+    default: tmux.project-alpha
     mode: sequential
 ```
 
@@ -130,16 +130,16 @@ profiles:
 Commands should remain explicit:
 
 ```sh
-keyroute go tmux.default-browser
-keyroute go zgh
-keyroute profile default-browser
+keyroute go tmux.project-alpha
+keyroute go docs
+keyroute profile project-alpha
 keyroute list
-keyroute inspect tmux.default-browser
+keyroute inspect tmux.project-alpha
 keyroute doctor
 keyroute config path
 ```
 
-No implicit `keyroute tmux.default-browser` command is planned for the initial
+No implicit `keyroute tmux.project-alpha` command is planned for the initial
 design.
 
 ### Output Formats
@@ -152,11 +152,11 @@ Example `keyroute list --format json`:
 ```json
 {
   "aliases": {
-    "db": "profile.default-browser",
-    "tdb": "target.tmux.default-browser"
+    "db": "profile.project-alpha",
+    "alpha": "target.tmux.project-alpha"
   },
-  "targets": ["tmux.default-browser", "browser.helium.default-browser"],
-  "profiles": ["default-browser"]
+  "targets": ["tmux.project-alpha", "browser.secondary.project-alpha"],
+  "profiles": ["project-alpha"]
 }
 ```
 
@@ -168,9 +168,9 @@ use prefixed references:
 
 ```yaml
 aliases:
-  t1: target.tmux.default-browser
-  z1: target.browser.zen.github
-  db: profile.default-browser
+  alpha: target.tmux.project-alpha
+  docs: target.browser.primary.docs
+  db: profile.project-alpha
 ```
 
 Resolution rules:
@@ -223,11 +223,11 @@ The tmux adapter is the primary deterministic development workflow adapter.
 
 ```yaml
 targets:
-  tmux.reef:
+  tmux.project-beta:
     adapter: tmux
-    app: com.mitchellh.ghostty
-    session: reef
-    cwd: ~/projects/reef
+    app: com.example.Terminal
+    session: project-beta
+    cwd: ~/work/project-beta
     create: true
 ```
 
@@ -242,9 +242,9 @@ Behavior:
 Likely tmux primitives:
 
 ```sh
-tmux has-session -t reef
-tmux new-session -d -s reef -c /path
-tmux switch-client -t reef
+tmux has-session -t project-beta
+tmux new-session -d -s project-beta -c /path
+tmux switch-client -t project-beta
 ```
 
 ### chromium Adapter
@@ -258,16 +258,16 @@ Configuration:
 
 ```yaml
 targets:
-  browser.helium.default-browser:
+  browser.secondary.project-alpha:
     adapter: chromium
-    browser: helium
-    workspace: default-browser
+    browser: secondary
+    workspace: project-alpha
     command: /path/to/switch-chromium
 ```
 
 Fields:
 
-- `browser` (required): the browser identifier (e.g. `helium`, `zen`, `chrome`).
+- `browser` (required): the browser identifier (e.g. `secondary`, `primary`, `chrome`).
 - `workspace` (required): the workspace or profile name to activate.
 - `command` (optional): path to a helper script. If omitted, Keyroute uses a
   built-in default per browser.
@@ -275,7 +275,7 @@ Fields:
 Execution with `command`:
 
 ```sh
-/path/to/switch-chromium --browser helium --workspace default-browser
+/path/to/switch-chromium --browser secondary --workspace project-alpha
 ```
 
 Execution without `command` uses an internal mapping from `browser` to the
@@ -289,10 +289,10 @@ accessible metadata.
 
 ```yaml
 targets:
-  codex.default-browser:
+  app.editor.project-alpha:
     adapter: macos-window
-    app: com.openai.codex
-    titleContains: default-browser
+    app: com.example.Editor
+    titleContains: project-alpha
 ```
 
 Behavior:
@@ -333,14 +333,14 @@ The command adapter is the escape hatch.
 
 ```yaml
 targets:
-  opencode.default:
+  command.tool.default:
     adapter: command
-    run: /path/to/opencode-focus
+    run: /path/to/tool-focus
     args:
-      - default-browser
-    cwd: ~/projects
+      - project-alpha
+    cwd: ~/work
     env:
-      KEYROUTE_TARGET: opencode.default
+      KEYROUTE_TARGET: command.tool.default
 ```
 
 Fields:
@@ -402,12 +402,12 @@ Profiles are deterministic macOS workspaces composed from targets.
 
 ```yaml
 profiles:
-  default-browser:
+  project-alpha:
     targets:
-      - browser.helium.default-browser
-      - tmux.default-browser
-      - codex.default-browser
-    default: tmux.default-browser
+      - browser.secondary.project-alpha
+      - tmux.project-alpha
+      - app.editor.project-alpha
+    default: tmux.project-alpha
     mode: sequential
 ```
 
@@ -430,9 +430,9 @@ might include `parallel` for simultaneous activation where safe.
 Commands:
 
 ```sh
-keyroute profile default-browser
-keyroute profile default-browser --focus codex.default-browser
-keyroute profile default-browser --focus default
+keyroute profile project-alpha
+keyroute profile project-alpha --focus app.editor.project-alpha
+keyroute profile project-alpha --focus default
 keyroute profile list
 ```
 
@@ -452,7 +452,7 @@ profile = workspace mode + target set + keymap
 This is useful when the same physical shortcut should route to different
 deterministic sessions depending on the current mode. For example, while in a
 `working` profile, tmux slot `1` might mean a work API repo. In a
-`side-projects` profile, tmux slot `1` might mean Keyroute itself.
+`side-projects` profile, tmux slot `1` might mean a tooling project.
 
 ```yaml
 profiles:
@@ -462,7 +462,7 @@ profiles:
       - tmux.work-api
       - tmux.work-web
       - tmux.work-infra
-      - browser.zen.work
+      - browser.primary.work
     keymaps:
       tmux:
         "1": tmux.work-api
@@ -470,31 +470,31 @@ profiles:
         "3": tmux.work-infra
         "4": tmux.work-notes
       browser:
-        "1": browser.zen.work
-        "2": browser.helium.dashboard
+        "1": browser.primary.work
+        "2": browser.secondary.dashboard
 
   side-projects:
-    default: tmux.keyroute
+    default: tmux.tooling
     targets:
-      - tmux.keyroute
-      - tmux.default-browser
+      - tmux.tooling
+      - tmux.project-alpha
       - tmux.side-project
-      - browser.zen.github
+      - browser.primary.docs
     keymaps:
       tmux:
-        "1": tmux.keyroute
-        "2": tmux.default-browser
+        "1": tmux.tooling
+        "2": tmux.project-alpha
         "3": tmux.side-project
       browser:
-        "1": browser.zen.github
-        "2": browser.helium.default-browser
+        "1": browser.primary.docs
+        "2": browser.secondary.project-alpha
 ```
 
 The input layer can stay stable:
 
 ```text
-Ghostty Ctrl+1 -> keyroute key tmux 1
-Ghostty Ctrl+2 -> keyroute key tmux 2
+Terminal Ctrl+1 -> keyroute key tmux 1
+Terminal Ctrl+2 -> keyroute key tmux 2
 
 Browser Ctrl+1 -> keyroute key browser 1
 Browser Ctrl+2 -> keyroute key browser 2
@@ -525,7 +525,7 @@ keyroute key --profile working tmux 1
 # resolves to tmux.work-api
 
 keyroute key --profile side-projects tmux 1
-# resolves to tmux.keyroute
+# resolves to tmux.tooling
 ```
 
 This is the best fit when Leader Key, BetterTouchTool, or another input layer
@@ -541,7 +541,7 @@ keyroute key tmux 1
 
 keyroute key tmux 1
 # active profile: side-projects
-# resolves to tmux.keyroute
+# resolves to tmux.tooling
 ```
 
 This is useful for high-frequency workflows where the same physical shortcut
@@ -566,8 +566,8 @@ profile changes namespace + key -> deterministic target binding
 Direct target calls remain absolute and are not affected by the active profile:
 
 ```sh
-keyroute go tmux.keyroute
-keyroute go browser.zen.github
+keyroute go tmux.tooling
+keyroute go browser.primary.docs
 ```
 
 Only profile-relative key commands depend on active profile state:
@@ -613,41 +613,41 @@ Namespace: tmux
 BetterTouchTool can call shell commands directly:
 
 ```sh
-/opt/homebrew/bin/keyroute go tmux.default-browser
-/opt/homebrew/bin/keyroute go browser.zen.github
-/opt/homebrew/bin/keyroute profile default-browser
+/opt/homebrew/bin/keyroute go tmux.project-alpha
+/opt/homebrew/bin/keyroute go browser.primary.docs
+/opt/homebrew/bin/keyroute profile project-alpha
 ```
 
 App-specific BTT triggers can bind different keys based on the frontmost app:
 
 ```text
-When Zen is active:
-Cmd+1 -> keyroute go browser.zen.workspace-1
-Cmd+2 -> keyroute go browser.zen.workspace-2
+When the primary browser is active:
+Cmd+1 -> keyroute go browser.primary.workspace-1
+Cmd+2 -> keyroute go browser.primary.workspace-2
 
-When Ghostty is active:
-Cmd+1 -> keyroute go tmux.default-browser
-Cmd+2 -> keyroute go tmux.reef
+When Terminal is active:
+Cmd+1 -> keyroute go tmux.project-alpha
+Cmd+2 -> keyroute go tmux.project-beta
 ```
 
 Leader Key can stay simple:
 
 ```text
-leader -> t -> 1  keyroute go tmux.default-browser
-leader -> t -> 2  keyroute go tmux.reef
-leader -> b -> z  keyroute go browser.zen.main
-leader -> c -> d  keyroute go codex.default-browser
+leader -> t -> 1  keyroute go tmux.project-alpha
+leader -> t -> 2  keyroute go tmux.project-beta
+leader -> b -> z  keyroute go browser.primary.main
+leader -> c -> d  keyroute go app.editor.project-alpha
 ```
 
-### Ghostty and tmux
+### Terminal and tmux
 
 Keyroute can also be called from inside the active app's own control system.
-For example, when using tmux inside Ghostty, Ghostty can own app-specific
+For example, when using tmux inside Terminal, Terminal can own app-specific
 shortcuts, delegate them into tmux prefix shortcuts, and tmux can call Keyroute
 to switch sessions deterministically.
 
 ```text
-Ghostty app-specific shortcut
+Terminal app-specific shortcut
         |
         v
 tmux prefix/key binding
@@ -662,30 +662,30 @@ deterministic tmux session switch
 Example tmux bindings:
 
 ```tmux
-bind-key 1 run-shell 'keyroute go tmux.default-browser'
-bind-key 2 run-shell 'keyroute go tmux.reef'
-bind-key 3 run-shell 'keyroute go tmux.personal'
+bind-key 1 run-shell 'keyroute go tmux.project-alpha'
+bind-key 2 run-shell 'keyroute go tmux.project-beta'
+bind-key 3 run-shell 'keyroute go tmux.project-gamma'
 ```
 
 Then the user-facing workflow can be:
 
 ```text
-When Ghostty/tmux is active:
-Ctrl+1 -> default-browser session
-Ctrl+2 -> reef session
-Ctrl+3 -> personal session
+When Terminal/tmux is active:
+Ctrl+1 -> project-alpha session
+Ctrl+2 -> project-beta session
+Ctrl+3 -> project-gamma session
 ```
 
 The tmux adapter can still handle create-if-missing behavior:
 
 ```sh
-tmux has-session -t default-browser \
-  || tmux new-session -d -s default-browser -c ~/projects/default-browser
+tmux has-session -t project-alpha \
+  || tmux new-session -d -s project-alpha -c ~/work/project-alpha
 
-tmux switch-client -t default-browser
+tmux switch-client -t project-alpha
 ```
 
-This keeps Ghostty responsible only for delivering deterministic key input,
+This keeps Terminal responsible only for delivering deterministic key input,
 keeps tmux responsible for terminal session context, and keeps Keyroute
 responsible for routing policy.
 
