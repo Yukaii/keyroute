@@ -14,3 +14,21 @@ keyroute profile project-alpha
 ```
 
 See [docs/design.md](docs/design.md) for the initial design.
+
+## Development
+
+Build the CLI with SwiftPM:
+
+```sh
+swift build
+```
+
+Run commands from the package checkout:
+
+```sh
+swift run keyroute list
+swift run keyroute inspect tmux.project-alpha
+swift run keyroute go tmux.project-alpha --dry-run
+```
+
+The MVP reads config from `~/.config/keyroute/config.yaml`.
