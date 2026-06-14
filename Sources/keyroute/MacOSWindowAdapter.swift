@@ -1,3 +1,4 @@
+#if os(macOS)
 import AppKit
 import ApplicationServices
 import Foundation
@@ -69,3 +70,12 @@ struct MacOSWindowAdapter: Adapter {
         return titleValue as? String ?? ""
     }
 }
+#else
+import Foundation
+
+struct MacOSWindowAdapter: Adapter {
+    func activate(targetID: String, target: TargetConfig, context: RuntimeContext) -> AdapterResult {
+        .error("macos-window target '\(targetID)' is only supported on macOS", exitCode: .config)
+    }
+}
+#endif

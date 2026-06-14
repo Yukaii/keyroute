@@ -1,4 +1,3 @@
-import ApplicationServices
 import Foundation
 
 struct GlobalOptions {
@@ -266,7 +265,7 @@ enum KeyrouteCLI {
             print("profiles: \(loaded.config.profileMap.count)")
             let tmuxStatus = CommandRunner().run(executable: "/usr/bin/env", arguments: ["tmux", "-V"], quiet: true)
             print("tmux: \(tmuxStatus == 0 ? "available" : "not found")")
-            print("accessibility: \(AXIsProcessTrusted() ? "granted" : "not granted")")
+            print("accessibility: \(accessibilityStatus())")
         }
     }
 

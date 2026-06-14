@@ -60,7 +60,7 @@ struct CommandRunner {
             try process.run()
             if let stdin {
                 stdinPipe.fileHandleForWriting.write(stdin)
-                try? stdinPipe.fileHandleForWriting.close()
+                stdinPipe.fileHandleForWriting.closeFile()
             }
             process.waitUntilExit()
             let stdout = (quiet || captureOutput) ? stdoutPipe.fileHandleForReading.readDataToEndOfFile() : Data()

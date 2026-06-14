@@ -3,9 +3,6 @@ import PackageDescription
 
 let package = Package(
     name: "keyroute",
-    platforms: [
-        .macOS(.v13)
-    ],
     products: [
         .executable(name: "keyroute", targets: ["keyroute"])
     ],

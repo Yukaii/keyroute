@@ -23,10 +23,10 @@ Portable today:
 - `command` adapter.
 - `external` adapter contract.
 - Most of the `tmux` adapter behavior.
+- The package builds and tests on macOS and Linux.
 
 macOS-specific today:
 
-- Package platform declaration is macOS-focused.
 - `macos-window` uses AppKit and Accessibility APIs.
 - `tmux` optionally activates a host app by macOS bundle id.
 - Examples use macOS bundle ids such as `com.mitchellh.ghostty`.
@@ -210,11 +210,15 @@ Browsers:
 ## Migration Plan
 
 1. Keep `external` documented as the portable adapter path.
-2. Move macOS-only helpers behind `#if os(macOS)`.
-3. Stop importing AppKit from shared files.
-4. Make `tmux` build without macOS app activation on non-macOS platforms.
-5. Split source modules when the platform boundary is stable.
-6. Add CI for at least macOS and Linux once non-macOS build support exists.
+2. Move macOS-only helpers behind `#if os(macOS)`. Done for current AppKit and
+   Accessibility usage.
+3. Stop importing AppKit from shared files. Done for the CLI entrypoint and
+   shared helpers.
+4. Make `tmux` build without macOS app activation on non-macOS platforms. Done;
+   app activation is a no-op outside macOS.
+5. Add CI for at least macOS and Linux once non-macOS build support exists.
+   Done for build and test.
+6. Split source modules when the platform boundary is stable.
 7. Add platform-specific docs and examples.
 8. Revisit Rust only if packaging or distribution becomes a larger problem than
    implementation momentum.
