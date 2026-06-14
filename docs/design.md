@@ -354,6 +354,31 @@ The command inherits the user's shell environment plus any `env` entries. The
 adapter returns the command's exit code directly. Stdout and stderr are passed
 through unless `--quiet` is set.
 
+### external Adapter
+
+The external adapter is the language-agnostic extension point for custom
+adapters implemented as shell scripts or other executables.
+
+```yaml
+targets:
+  custom.editor.project-alpha:
+    adapter: external
+    run: ~/.config/keyroute/adapters/focus-editor
+    app: com.example.Editor
+    titleContains: project-alpha
+```
+
+Unlike the command adapter, which simply runs a command as the target action,
+the external adapter uses an adapter contract:
+
+- The full target config, including custom fields, is encoded as JSON and sent
+  to the adapter on stdin.
+- Adapter context is also exposed through `KEYROUTE_*` environment variables.
+- Exit codes follow Keyroute's adapter status meanings.
+
+This keeps Keyroute extensible without requiring adapter authors to write Swift
+or link against Keyroute internals.
+
 ### Config Schema Summary
 
 Top-level keys:
@@ -382,6 +407,7 @@ profiles: { string: profile-config }
 | `titleContains` | macos-window | no* | Substring match. |
 | `titleRegex` | macos-window | no* | Regex match. |
 | `windowIndex` | macos-window | no* | 1-based window index. |
+| `run` | external | yes* | External adapter executable. |
 
 At least one match rule is required for `macos-window`.
 

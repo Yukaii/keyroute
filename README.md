@@ -18,6 +18,12 @@ See [docs/design.md](docs/design.md) for the initial design.
 See [docs/tmux-ghostty.md](docs/tmux-ghostty.md) for a detailed example of
 using Keyroute as a fast tmux session switcher underneath Ghostty.
 
+See [docs/adapters.md](docs/adapters.md) for the built-in adapter layout and
+the external adapter contract for custom scripts.
+
+See [docs/adapter-status.md](docs/adapter-status.md) for the current
+implementation status of each official adapter.
+
 ## Development
 
 Build the CLI with SwiftPM:

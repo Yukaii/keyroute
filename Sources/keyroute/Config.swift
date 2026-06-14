@@ -11,28 +11,6 @@ struct KeyrouteConfig: Codable {
     var profileMap: [String: ProfileConfig] { profiles ?? [:] }
 }
 
-struct TargetConfig: Codable {
-    let adapter: String
-    let app: String?
-    let session: String?
-    let cwd: String?
-    let create: Bool?
-    let browser: String?
-    let workspace: String?
-    let command: String?
-    let run: String?
-    let args: [String]?
-    let env: [String: String]?
-    let title: String?
-    let titleContains: String?
-    let titleRegex: String?
-    let windowIndex: Int?
-
-    var hasWindowMatchRule: Bool {
-        title != nil || titleContains != nil || titleRegex != nil || windowIndex != nil
-    }
-}
-
 struct ProfileConfig: Codable {
     let targets: [String]?
     let `default`: String?
@@ -190,6 +168,10 @@ struct LoadedConfig {
         case "command":
             guard target.run != nil || target.command != nil else {
                 throw KeyrouteError.config("target '\(id)' command adapter requires 'run' or 'command'")
+            }
+        case "external":
+            guard target.run != nil || target.command != nil else {
+                throw KeyrouteError.config("target '\(id)' external adapter requires 'run' or 'command'")
             }
         case "chromium":
             guard target.browser != nil else { throw KeyrouteError.config("target '\(id)' chromium adapter requires 'browser'") }
