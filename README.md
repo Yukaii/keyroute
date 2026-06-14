@@ -15,6 +15,9 @@ keyroute profile project-alpha
 
 See [docs/design.md](docs/design.md) for the initial design.
 
+See [docs/tmux-ghostty.md](docs/tmux-ghostty.md) for a detailed example of
+using Keyroute as a fast tmux session switcher underneath Ghostty.
+
 ## Development
 
 Build the CLI with SwiftPM:

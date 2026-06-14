@@ -223,6 +223,14 @@ struct LoadedConfig {
         if let mode = profile.mode, mode != "sequential" {
             throw KeyrouteError.config("profile '\(id)' uses unsupported mode '\(mode)'")
         }
+
+        for (namespace, keymap) in profile.keymaps ?? [:] {
+            for (key, targetID) in keymap {
+                guard config.targetMap[targetID] != nil else {
+                    throw KeyrouteError.config("profile '\(id)' keymap \(namespace).\(key) references unknown target '\(targetID)'")
+                }
+            }
+        }
     }
 
     private func unknownTarget(_ name: String) -> KeyrouteError {

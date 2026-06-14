@@ -17,4 +17,13 @@ enum StateStore {
         let data = try JSONEncoder().encode(ProfileState(activeProfile: activeProfile))
         try data.write(to: url, options: [.atomic])
     }
+
+    static func load() throws -> ProfileState {
+        let path = path()
+        guard FileManager.default.fileExists(atPath: path) else {
+            return ProfileState(activeProfile: nil)
+        }
+        let data = try Data(contentsOf: URL(fileURLWithPath: path))
+        return try JSONDecoder().decode(ProfileState.self, from: data)
+    }
 }

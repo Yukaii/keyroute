@@ -24,6 +24,8 @@ enum KeyrouteCLI {
                 try go(args: args, options: options)
             case "profile":
                 try profile(args: args, options: options)
+            case "key":
+                try key(args: args, options: options)
             case "list":
                 try list(options: options)
             case "inspect":
@@ -76,7 +78,7 @@ enum KeyrouteCLI {
         let loaded = try ConfigLoader.load()
         let (targetID, target) = try loaded.resolveTarget(name)
         let result = activateTarget(id: targetID, target: target, options: options)
-        finish(result)
+        finish(result, quiet: options.quiet)
     }
 
     private static func profile(args: [String], options: GlobalOptions) throws {
@@ -88,6 +90,31 @@ enum KeyrouteCLI {
         if first == "list" {
             for id in loaded.config.profileMap.keys.sorted() {
                 print(id)
+            }
+            return
+        }
+
+        if first == "current" {
+            let state = try StateStore.load()
+            if let activeProfile = state.activeProfile {
+                print(activeProfile)
+            } else {
+                throw KeyrouteError.activeProfileMissing("no active profile. Run 'keyroute profile set <name>' or pass --profile <name>'.")
+            }
+            return
+        }
+
+        if first == "set" {
+            guard args.indices.contains(1) else {
+                throw KeyrouteError.general("usage: keyroute profile set <name>")
+            }
+            let profileID = args[1]
+            _ = try loaded.resolveProfile(profileID)
+            if !options.dryRun {
+                try StateStore.save(activeProfile: profileID)
+            }
+            if !options.quiet {
+                print(options.dryRun ? "dry-run: active profile would be set to '\(profileID)'" : "active profile set to '\(profileID)'")
             }
             return
         }
@@ -113,7 +140,7 @@ enum KeyrouteCLI {
                 throw KeyrouteError.config("profile '\(profileID)' references unknown target '\(targetID)'")
             }
             let result = activateTarget(id: targetID, target: target, options: options)
-            guard result.exitCode == .success else { finish(result) }
+            guard result.exitCode == .success else { finish(result, quiet: options.quiet) }
         }
 
         let defaultID = profile.default
@@ -123,15 +150,65 @@ enum KeyrouteCLI {
                 throw KeyrouteError.config("profile '\(profileID)' focus references unknown target '\(focusID)'")
             }
             let result = activateTarget(id: focusID, target: target, options: options)
-            guard result.exitCode == .success else { finish(result) }
+            guard result.exitCode == .success else { finish(result, quiet: options.quiet) }
         }
 
         if !options.dryRun {
             try StateStore.save(activeProfile: profileID)
         }
         if !options.quiet {
-            print("profile '\(profileID)' activated")
+            if options.dryRun {
+                print("dry-run: profile '\(profileID)' activation resolved")
+            } else {
+                print("profile '\(profileID)' activated")
+            }
         }
+    }
+
+    private static func key(args: [String], options: GlobalOptions) throws {
+        var args = args
+        var profileOverride: String?
+
+        if args.first == "--profile" {
+            guard args.indices.contains(1) else {
+                throw KeyrouteError.general("--profile requires a profile name")
+            }
+            profileOverride = args[1]
+            args.removeFirst(2)
+        }
+
+        guard args.count == 2 else {
+            throw KeyrouteError.general("usage: keyroute key [--profile <profile>] <namespace> <key>")
+        }
+
+        let namespace = args[0]
+        let key = args[1]
+        let loaded = try ConfigLoader.load()
+        let profileID: String
+        let profile: ProfileConfig
+
+        if let profileOverride {
+            (profileID, profile) = try loaded.resolveProfile(profileOverride)
+        } else {
+            let state = try StateStore.load()
+            guard let activeProfile = state.activeProfile else {
+                throw KeyrouteError.activeProfileMissing("no active profile. Run 'keyroute profile set <name>' or pass --profile <name>'.")
+            }
+            (profileID, profile) = try loaded.resolveProfile(activeProfile)
+        }
+
+        guard let namespaceMap = profile.keymaps?[namespace] else {
+            throw KeyrouteError.notFound("profile '\(profileID)' has no keymap namespace '\(namespace)'")
+        }
+
+        guard let targetID = namespaceMap[key] else {
+            let validKeys = namespaceMap.keys.sorted().joined(separator: ", ")
+            throw KeyrouteError.notFound("profile '\(profileID)' keymap '\(namespace)' has no key '\(key)'. Valid keys: \(validKeys)")
+        }
+
+        let (resolvedID, target) = try loaded.resolveTarget(targetID)
+        let result = activateTarget(id: resolvedID, target: target, options: options)
+        finish(result, quiet: options.quiet)
     }
 
     private static func list(options: GlobalOptions) throws {
@@ -217,9 +294,9 @@ enum KeyrouteCLI {
         return result
     }
 
-    private static func finish(_ result: AdapterResult) -> Never {
+    private static func finish(_ result: AdapterResult, quiet: Bool = false) -> Never {
         if result.exitCode == .success {
-            if !result.message.isEmpty {
+            if !quiet, !result.message.isEmpty {
                 print(result.message)
             }
         } else {
@@ -236,6 +313,9 @@ enum KeyrouteCLI {
           keyroute go <target-or-alias> [--dry-run]
           keyroute profile <name> [--focus <target-id|default>] [--dry-run]
           keyroute profile list
+          keyroute profile current
+          keyroute profile set <name>
+          keyroute key [--profile <profile>] <namespace> <key>
           keyroute list [--format text|json|yaml]
           keyroute inspect <name> [--format text|json|yaml]
           keyroute doctor
