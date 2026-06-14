@@ -174,7 +174,20 @@ public struct LoadedConfig {
             }
         case "chromium":
             guard target.browser != nil else { throw KeyrouteError.config("target '\(id)' chromium adapter requires 'browser'") }
-            guard target.workspace != nil else { throw KeyrouteError.config("target '\(id)' chromium adapter requires 'workspace'") }
+            let hasWorkspace = target.workspace != nil
+            let hasProfile = target.profile != nil
+            guard hasWorkspace || hasProfile else {
+                throw KeyrouteError.config("target '\(id)' chromium adapter requires either 'workspace' or 'profile'")
+            }
+            guard !(hasWorkspace && hasProfile) else {
+                throw KeyrouteError.config("target '\(id)' chromium adapter cannot specify both 'workspace' and 'profile'")
+            }
+            if let lang = target.lang, !lang.isEmpty {
+                let supported = ["en", "jp", "zh-tw", "zh-cn"]
+                guard supported.contains(lang.lowercased()) else {
+                    throw KeyrouteError.config("target '\(id)' chromium adapter uses unsupported 'lang' '\(lang)'")
+                }
+            }
         case "tmux":
             guard target.session != nil else { throw KeyrouteError.config("target '\(id)' tmux adapter requires 'session'") }
         case "macos-window":

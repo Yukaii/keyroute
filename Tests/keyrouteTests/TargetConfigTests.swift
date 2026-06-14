@@ -32,6 +32,25 @@ final class TargetConfigTests: XCTestCase {
         XCTAssertEqual(nested["count"]?.intValue, 2)
     }
 
+    func testDecodesChromiumFields() throws {
+        let json = """
+        {
+          "adapter": "chromium",
+          "browser": "brave",
+          "profile": "work",
+          "lang": "jp"
+        }
+        """
+
+        let target = try JSONDecoder().decode(TargetConfig.self, from: Data(json.utf8))
+
+        XCTAssertEqual(target.adapter, "chromium")
+        XCTAssertEqual(target.browser, "brave")
+        XCTAssertEqual(target.profile, "work")
+        XCTAssertNil(target.workspace)
+        XCTAssertEqual(target.lang, "jp")
+    }
+
     func testStringArrayValueRequiresAllStrings() {
         let value = ConfigValue.array([.string("--flag"), .int(1)])
 

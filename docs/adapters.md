@@ -164,12 +164,19 @@ chmod +x ~/.config/keyroute/adapters/focus-editor
 
 ## Shipped Examples
 
-Keyroute embeds small reference adapters that can be printed from the CLI:
+Keyroute embeds small reference adapters that can be printed or installed from
+the CLI:
 
 ```sh
 keyroute example list
 keyroute example show tmux-shell
+keyroute example install
 ```
+
+`keyroute example install` creates the default adapters directory
+(`~/.config/keyroute/adapters`) and writes every embedded example there,
+skipping files that already exist. A custom directory can be passed as an
+argument.
 
 The examples are reference implementations, not hidden behavior. They are
 intended to be copied, edited, and owned by the user.
@@ -200,6 +207,36 @@ targets:
 ```
 
 The script expects `jq` and `tmux` to be available in `PATH`.
+
+### Chromium Helper
+
+The `switch-chromium` example is a standalone shell script that switches
+profiles or workspaces in Chromium-based browsers via macOS menu items. It is
+used by the built-in `chromium` adapter when no `command` is configured.
+
+Install it:
+
+```sh
+mkdir -p ~/.config/keyroute/adapters
+keyroute example show switch-chromium > ~/.config/keyroute/adapters/switch-chromium
+chmod +x ~/.config/keyroute/adapters/switch-chromium
+```
+
+Use it:
+
+```yaml
+targets:
+  browser.chrome.work:
+    adapter: chromium
+    browser: chrome
+    workspace: work
+
+  browser.brave.personal:
+    adapter: chromium
+    browser: brave
+    profile: personal
+    lang: en
+```
 
 ## Adding Built-In Adapters
 

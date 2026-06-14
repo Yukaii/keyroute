@@ -34,6 +34,8 @@ public struct TargetConfig: Codable {
     public var create: Bool? { bool("create") }
     public var browser: String? { string("browser") }
     public var workspace: String? { string("workspace") }
+    public var profile: String? { string("profile") }
+    public var lang: String? { string("lang") }
     public var command: String? { string("command") }
     public var run: String? { string("run") }
     public var args: [String]? { stringArray("args") }

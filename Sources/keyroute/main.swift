@@ -307,8 +307,24 @@ enum KeyrouteCLI {
                 throw KeyrouteError.notFound("unknown example '\(name)'. Valid examples: \(EmbeddedExamples.names.joined(separator: ", "))")
             }
             print(item.content)
+        case "install":
+            let directory = args.indices.contains(1) ? args[1] : nil
+            let result = try EmbeddedExamples.installAll(directory: directory)
+            if !result.installed.isEmpty {
+                print("installed: \(result.installed.joined(separator: ", "))")
+            }
+            if !result.skipped.isEmpty {
+                print("skipped (already exist): \(result.skipped.joined(separator: ", "))")
+            }
+            if !result.failed.isEmpty {
+                for failure in result.failed {
+                    fputs("keyroute: failed to install \(failure.name): \(failure.error)\n", stderr)
+                }
+                Foundation.exit(ExitCode.adapterError.value)
+            }
+            print("adapters directory: \(result.directory)")
         default:
-            throw KeyrouteError.general("usage: keyroute example list|show <name>")
+            throw KeyrouteError.general("usage: keyroute example list|show <name>|install [directory]")
         }
     }
 
@@ -357,6 +373,7 @@ enum KeyrouteCLI {
           keyroute config path
           keyroute example list
           keyroute example show <name>
+          keyroute example install [directory]
         """)
     }
 }

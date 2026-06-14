@@ -12,7 +12,7 @@ safe to depend on.
 | `command` | MVP implemented | Runs a configured command with args, cwd, and env. |
 | `external` | MVP implemented | Runs custom adapter scripts with target JSON on stdin. |
 | `macos-window` | Partial native implementation | Uses Accessibility window matching and raise; no launch/create behavior. |
-| `chromium` | Script-wrapper only | Requires a user-provided `command`; no built-in browser/workspace switching yet. |
+| `chromium` | Script-wrapper with embedded helper | Supports browser profiles/workspaces and menu localization; ships with an installable `switch-chromium` helper. |
 
 ## `tmux`
 
@@ -118,40 +118,54 @@ Source: `Sources/KeyrouteCore/ChromiumAdapter.swift`
 Implemented:
 
 - Requires `browser`.
-- Requires `workspace`.
-- Requires `command`.
-- Executes the configured command as:
+- Requires either `workspace` or `profile` (not both).
+- Optional `lang`: `en` (default), `jp`, `zh-tw`, or `zh-cn`.
+- Optional `command`; defaults to `~/.config/keyroute/adapters/switch-chromium`.
+- Executes the configured command as one of:
 
 ```sh
-<command> --browser <browser> --workspace <workspace>
+<command> --browser <browser> --workspace <workspace> --en
+<command> --browser <browser> --profile <profile> --jp
 ```
 
+- Ships the `switch-chromium` embedded example for installation via
+  `keyroute example show switch-chromium`.
 - Supports `--dry-run`.
 - Supports `--quiet`.
 
 Current limitation:
 
-This is not a built-in Chromium workspace adapter yet. It is only the
-script-wrapper path from the MVP design. Keyroute does not currently ship
-browser-specific AppleScript, URL-handler, profile, or workspace switching
-logic.
+This is still the script-wrapper path. Keyroute invokes a helper script rather
+than implementing native browser workspace switching. The shipped
+`switch-chromium` helper uses AppleScript to click the browser's Profile or
+Window menu.
 
 Known gaps:
 
-- No default command mapping per browser.
-- No native Chrome/Chromium/Arc/Brave profile or workspace switching.
+- No native in-process browser workspace switching.
 - No browser app activation beyond whatever the helper script does.
-- No verification that the requested browser workspace became active.
+- No verification that the requested browser workspace/profile became active.
 
 Recommended usage today:
+
+```sh
+mkdir -p ~/.config/keyroute/adapters
+keyroute example show switch-chromium > ~/.config/keyroute/adapters/switch-chromium
+chmod +x ~/.config/keyroute/adapters/switch-chromium
+```
 
 ```yaml
 targets:
   browser.primary.docs:
     adapter: chromium
-    browser: primary
+    browser: chrome
     workspace: docs
-    command: ~/.config/keyroute/adapters/switch-chromium
+
+  browser.brave.personal:
+    adapter: chromium
+    browser: brave
+    profile: personal
+    lang: en
 ```
 
 For anything beyond this wrapper contract, use `adapter: external` until a
