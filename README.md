@@ -24,6 +24,9 @@ the external adapter contract for custom scripts.
 See [docs/adapter-status.md](docs/adapter-status.md) for the current
 implementation status of each official adapter.
 
+See [docs/platform-agnostic.md](docs/platform-agnostic.md) for the future
+direction toward a portable core with optional platform adapters.
+
 ## Development
 
 Build the CLI with SwiftPM:
