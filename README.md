@@ -41,3 +41,7 @@ swift run keyroute go tmux.project-alpha --dry-run
 ```
 
 The MVP reads config from `~/.config/keyroute/config.yaml`.
+
+## License
+
+Keyroute is released under the [MIT License](LICENSE).
