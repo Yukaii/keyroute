@@ -10,11 +10,11 @@ target config -> adapter -> app/session/window/workspace
 Built-in adapters live as separate source files:
 
 ```text
-Sources/keyroute/CommandAdapter.swift
-Sources/keyroute/ChromiumAdapter.swift
-Sources/keyroute/TmuxAdapter.swift
-Sources/keyroute/MacOSWindowAdapter.swift
-Sources/keyroute/ExternalAdapter.swift
+Sources/KeyrouteCore/CommandAdapter.swift
+Sources/KeyrouteCore/ChromiumAdapter.swift
+Sources/KeyrouteCore/ExternalAdapter.swift
+Sources/KeyrouteTmux/TmuxAdapter.swift
+Sources/KeyrouteMacOS/MacOSWindowAdapter.swift
 ```
 
 See [adapter-status.md](adapter-status.md) for the current implementation status
@@ -23,12 +23,16 @@ and known gaps of each official adapter.
 Shared adapter types live in:
 
 ```text
-Sources/keyroute/Adapter.swift
+Sources/KeyrouteCore/Adapter.swift
+Sources/KeyrouteCore/CommandRunner.swift
+Sources/KeyrouteCore/TargetConfig.swift
+Sources/KeyrouteCore/ConfigValue.swift
 Sources/keyroute/AdapterRegistry.swift
-Sources/keyroute/CommandRunner.swift
-Sources/keyroute/TargetConfig.swift
-Sources/keyroute/ConfigValue.swift
 ```
+
+The executable target owns adapter composition. This keeps the core package
+portable while allowing platform-specific modules to be linked only where they
+are available.
 
 ## External Adapter
 
@@ -109,6 +113,20 @@ Other non-zero exit codes are returned as adapter failures.
 Stdout is used as the success message. Stderr is used as the error message. In
 quiet mode, output is captured so it does not flash in tmux or terminal UIs.
 
+External adapters may also emit structured JSON on stdout or stderr:
+
+```json
+{
+  "status": "success",
+  "message": "focused workspace",
+  "exitCode": 0
+}
+```
+
+Supported `status` values are `success`, `not-found`, `permission-denied`, and
+`error`. `message` and `exitCode` are optional. If `status` is present, Keyroute
+uses it instead of inferring status only from the process exit code.
+
 ### Shell Example
 
 ```sh
@@ -144,11 +162,52 @@ Save it somewhere executable:
 chmod +x ~/.config/keyroute/adapters/focus-editor
 ```
 
+## Shipped Examples
+
+Keyroute embeds small reference adapters that can be printed from the CLI:
+
+```sh
+keyroute example list
+keyroute example show tmux-shell
+```
+
+The examples are reference implementations, not hidden behavior. They are
+intended to be copied, edited, and owned by the user.
+
+### tmux Shell Adapter
+
+The `tmux-shell` example implements the same basic contract as the built-in
+`tmux` adapter through `adapter: external`.
+
+Install it:
+
+```sh
+mkdir -p ~/.config/keyroute/adapters
+keyroute example show tmux-shell > ~/.config/keyroute/adapters/tmux
+chmod +x ~/.config/keyroute/adapters/tmux
+```
+
+Use it:
+
+```yaml
+targets:
+  tmux.project:
+    adapter: external
+    run: ~/.config/keyroute/adapters/tmux
+    session: project
+    cwd: ~/Projects/project
+    create: true
+```
+
+The script expects `jq` and `tmux` to be available in `PATH`.
+
 ## Adding Built-In Adapters
 
 For adapters that should ship with Keyroute:
 
-1. Add a new `Sources/keyroute/<Name>Adapter.swift` file.
+1. Add a new file under the module that owns the behavior:
+   `Sources/KeyrouteCore`, `Sources/KeyrouteTmux`, or
+   `Sources/KeyrouteMacOS`.
 2. Implement `Adapter`.
 3. Register it in `AdapterRegistry.swift`.
 4. Add config validation in `Config.swift`.

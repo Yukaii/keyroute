@@ -1,7 +1,13 @@
+#if os(macOS)
+import AppKit
+#endif
 import Foundation
+import KeyrouteCore
 
-struct TmuxAdapter: Adapter {
-    func activate(targetID: String, target: TargetConfig, context: RuntimeContext) -> AdapterResult {
+public struct TmuxAdapter: Adapter {
+    public init() {}
+
+    public func activate(targetID: String, target: TargetConfig, context: RuntimeContext) -> AdapterResult {
         guard let session = target.session, !session.isEmpty else {
             return .error("tmux target '\(targetID)' requires 'session'")
         }
@@ -13,7 +19,11 @@ struct TmuxAdapter: Adapter {
                 steps.append("would create missing session")
             }
             if let app = target.app {
-                steps.append("would activate app \(app)")
+                if supportsAppActivation() {
+                    steps.append("would activate app \(app)")
+                } else {
+                    steps.append("would skip app activation for \(app) on \(currentPlatformName())")
+                }
             }
             steps.append("would switch attached client to '\(session)'")
             return .success("dry-run: \(steps.joined(separator: "; "))")
@@ -34,7 +44,7 @@ struct TmuxAdapter: Adapter {
             }
         }
 
-        if let bundleID = target.app {
+        if let bundleID = target.app, supportsAppActivation() {
             activateApp(bundleID: bundleID)
         }
 
@@ -44,4 +54,24 @@ struct TmuxAdapter: Adapter {
         }
         return .error("tmux session '\(session)' exists, but no attached client could be switched")
     }
+}
+
+@discardableResult
+private func activateApp(bundleID: String) -> Bool {
+    #if os(macOS)
+    guard let app = NSRunningApplication.runningApplications(withBundleIdentifier: bundleID).first else {
+        return false
+    }
+    return app.activate(options: [.activateAllWindows, .activateIgnoringOtherApps])
+    #else
+    return false
+    #endif
+}
+
+private func supportsAppActivation() -> Bool {
+    #if os(macOS)
+    return true
+    #else
+    return false
+    #endif
 }

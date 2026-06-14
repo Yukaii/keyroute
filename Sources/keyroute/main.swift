@@ -1,4 +1,9 @@
 import Foundation
+import KeyrouteCore
+
+#if os(macOS)
+import KeyrouteMacOS
+#endif
 
 struct GlobalOptions {
     var format: OutputFormat = .text
@@ -33,6 +38,8 @@ enum KeyrouteCLI {
                 try doctor(options: options)
             case "config":
                 try config(args: args)
+            case "example":
+                try example(args: args)
             case "help", "--help", "-h":
                 printUsage()
             default:
@@ -261,11 +268,16 @@ enum KeyrouteCLI {
         let loaded = try ConfigLoader.load()
         if !options.quiet {
             print("config: ok (\(loaded.path))")
+            print("platform: \(currentPlatformName())")
             print("targets: \(loaded.config.targetMap.count)")
             print("profiles: \(loaded.config.profileMap.count)")
             let tmuxStatus = CommandRunner().run(executable: "/usr/bin/env", arguments: ["tmux", "-V"], quiet: true)
             print("tmux: \(tmuxStatus == 0 ? "available" : "not found")")
-            print("accessibility: \(accessibilityStatus())")
+            #if os(macOS)
+            print("accessibility: \(macOSAccessibilityStatus())")
+            #else
+            print("accessibility: unsupported")
+            #endif
         }
     }
 
@@ -274,6 +286,30 @@ enum KeyrouteCLI {
             throw KeyrouteError.general("usage: keyroute config path")
         }
         print(ConfigLoader.defaultPath())
+    }
+
+    private static func example(args: [String]) throws {
+        guard let first = args.first else {
+            throw KeyrouteError.general("usage: keyroute example list|show <name>")
+        }
+
+        switch first {
+        case "list":
+            for item in EmbeddedExamples.all.sorted(by: { $0.name < $1.name }) {
+                print("\(item.name)\t\(item.description)")
+            }
+        case "show", "cat":
+            guard args.indices.contains(1) else {
+                throw KeyrouteError.general("usage: keyroute example show <name>")
+            }
+            let name = args[1]
+            guard let item = EmbeddedExamples.named(name) else {
+                throw KeyrouteError.notFound("unknown example '\(name)'. Valid examples: \(EmbeddedExamples.names.joined(separator: ", "))")
+            }
+            print(item.content)
+        default:
+            throw KeyrouteError.general("usage: keyroute example list|show <name>")
+        }
     }
 
     private static func activateTarget(id: String, target: TargetConfig, options: GlobalOptions) -> AdapterResult {
@@ -319,6 +355,8 @@ enum KeyrouteCLI {
           keyroute inspect <name> [--format text|json|yaml]
           keyroute doctor
           keyroute config path
+          keyroute example list
+          keyroute example show <name>
         """)
     }
 }

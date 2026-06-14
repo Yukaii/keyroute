@@ -17,6 +17,7 @@ constraint, but it is not the current implementation target.
 Portable today:
 
 - Config loading.
+- XDG-compatible config and state paths.
 - Aliases.
 - Target/profile/keymap resolution.
 - Active profile state.
@@ -24,6 +25,7 @@ Portable today:
 - `external` adapter contract.
 - Most of the `tmux` adapter behavior.
 - The package builds and tests on macOS and Linux.
+- `doctor` reports the current platform.
 
 macOS-specific today:
 
@@ -90,36 +92,60 @@ separate adapter semantics.
 - Promote an adapter into the built-in tree only when the behavior is stable,
   broadly useful, and easier to maintain centrally.
 
-## Proposed Package Split
+## Paths
 
-Future SwiftPM shape:
+Keyroute uses XDG-style paths for portable CLI state:
 
 ```text
-Sources/KeyrouteCore
+config: $XDG_CONFIG_HOME/keyroute/config.yaml
+state:  $XDG_STATE_HOME/keyroute/state.json
+```
+
+When the XDG variables are unset or relative, Keyroute falls back to:
+
+```text
+config: ~/.config/keyroute/config.yaml
+state:  ~/.local/state/keyroute/state.json
+```
+
+This keeps the current macOS setup unchanged while matching Linux conventions.
+
+## Package Split
+
+Current SwiftPM shape:
+
+```text
+Sources/KeyrouteCore/
   Config.swift
   TargetConfig.swift
   ProfileState.swift
   Adapter.swift
   ExternalAdapter.swift
   CommandAdapter.swift
+  ChromiumAdapter.swift
+  EmbeddedExamples.swift
 
-Sources/keyroute
-  main.swift
-
-Sources/KeyrouteMacOS
-  MacOSWindowAdapter.swift
-  MacOSAppActivation.swift
-
-Sources/KeyrouteTmux
+Sources/KeyrouteTmux/
   TmuxAdapter.swift
+
+Sources/KeyrouteMacOS/
+  MacOSWindowAdapter.swift
+  MacOSSystemStatus.swift
+
+Sources/keyroute/
+  main.swift
+  AdapterRegistry.swift
 ```
 
-The exact module names can change, but the boundary should remain:
+The boundary is:
 
-- Core resolver and portable adapters do not import AppKit or
+- `KeyrouteCore` owns config, resolution, state, output helpers, embedded
+  examples, and portable adapters. It does not import AppKit or
   ApplicationServices.
-- macOS adapters can import AppKit and Accessibility APIs.
-- Future Linux/Windows adapters live behind their own platform gates.
+- `KeyrouteTmux` owns tmux behavior. It conditionally uses AppKit on macOS only
+  for optional host-app activation.
+- `KeyrouteMacOS` owns AppKit and Accessibility behavior.
+- `keyroute` owns CLI parsing and adapter composition.
 
 ## Adapter Contract
 
@@ -182,6 +208,9 @@ Future direction:
 - Consider a separate field such as `hostApp` or `activateApp` if `app` becomes
   too macOS-specific.
 
+On non-macOS platforms, the `app` field is ignored by the built-in tmux adapter.
+Dry-runs report that app activation will be skipped.
+
 ## Platform Adapter Ideas
 
 macOS:
@@ -195,6 +224,27 @@ Linux:
 - external scripts for `wmctrl`, `xdotool`, `hyprctl`, `swaymsg`, `qdbus`, or
   desktop-specific APIs
 - native adapters only after stable contracts emerge
+- XDG config and state paths are supported
+- shipped example adapters are available through `keyroute example show`
+
+Example Linux-first external target:
+
+```yaml
+targets:
+  desktop.editor:
+    adapter: external
+    run: ~/.config/keyroute/adapters/focus-editor
+    workspace: editor
+
+profiles:
+  linux:
+    keymaps:
+      desktop:
+        "1": desktop.editor
+```
+
+The adapter script owns the desktop-specific details, such as `swaymsg`,
+`hyprctl`, `wmctrl`, or `xdotool`.
 
 Windows:
 
@@ -218,8 +268,10 @@ Browsers:
    app activation is a no-op outside macOS.
 5. Add CI for at least macOS and Linux once non-macOS build support exists.
    Done for build and test.
-6. Split source modules when the platform boundary is stable.
-7. Add platform-specific docs and examples.
+6. Split source modules when the platform boundary is stable. Done for
+   `KeyrouteCore`, `KeyrouteTmux`, `KeyrouteMacOS`, and the executable target.
+7. Add platform-specific docs and examples. Started with Linux external adapter
+   examples.
 8. Revisit Rust only if packaging or distribution becomes a larger problem than
    implementation momentum.
 
@@ -230,9 +282,5 @@ Browsers:
   platform implementations?
 - Should `app` remain the common app identity field, or should platform-specific
   fields be explicit?
-- Should external adapters support structured JSON output, or are exit codes
-  plus stdout/stderr enough?
-- Should profile state path follow XDG on Linux and platform conventions on
-  Windows?
 - Should built-in adapters be compiled conditionally or distributed as separate
   plugin executables?

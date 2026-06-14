@@ -1,7 +1,9 @@
 import Foundation
 
-struct ChromiumAdapter: Adapter {
-    func activate(targetID: String, target: TargetConfig, context: RuntimeContext) -> AdapterResult {
+public struct ChromiumAdapter: Adapter {
+    public init() {}
+
+    public func activate(targetID: String, target: TargetConfig, context: RuntimeContext) -> AdapterResult {
         guard let browser = target.browser, !browser.isEmpty else {
             return .error("chromium target '\(targetID)' requires 'browser'")
         }

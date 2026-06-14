@@ -1,7 +1,9 @@
 import Foundation
 
-struct CommandAdapter: Adapter {
-    func activate(targetID: String, target: TargetConfig, context: RuntimeContext) -> AdapterResult {
+public struct CommandAdapter: Adapter {
+    public init() {}
+
+    public func activate(targetID: String, target: TargetConfig, context: RuntimeContext) -> AdapterResult {
         guard let command = target.run ?? target.command, !command.isEmpty else {
             return .error("command adapter target '\(targetID)' requires 'run' or 'command'")
         }

@@ -1,30 +1,29 @@
 import Foundation
 import Yams
 
-struct KeyrouteConfig: Codable {
-    var aliases: [String: String]?
-    var targets: [String: TargetConfig]?
-    var profiles: [String: ProfileConfig]?
+public struct KeyrouteConfig: Codable {
+    public var aliases: [String: String]?
+    public var targets: [String: TargetConfig]?
+    public var profiles: [String: ProfileConfig]?
 
-    var aliasMap: [String: String] { aliases ?? [:] }
-    var targetMap: [String: TargetConfig] { targets ?? [:] }
-    var profileMap: [String: ProfileConfig] { profiles ?? [:] }
+    public var aliasMap: [String: String] { aliases ?? [:] }
+    public var targetMap: [String: TargetConfig] { targets ?? [:] }
+    public var profileMap: [String: ProfileConfig] { profiles ?? [:] }
 }
 
-struct ProfileConfig: Codable {
-    let targets: [String]?
-    let `default`: String?
-    let mode: String?
-    let keymaps: [String: [String: String]]?
+public struct ProfileConfig: Codable {
+    public let targets: [String]?
+    public let `default`: String?
+    public let mode: String?
+    public let keymaps: [String: [String: String]]?
 }
 
-enum ConfigLoader {
-    static func defaultPath() -> String {
-        let home = FileManager.default.homeDirectoryForCurrentUser.path
-        return "\(home)/.config/keyroute/config.yaml"
+public enum ConfigLoader {
+    public static func defaultPath(environment: [String: String] = ProcessInfo.processInfo.environment) -> String {
+        "\(PlatformPaths.configDirectory(environment: environment))/keyroute/config.yaml"
     }
 
-    static func load(path: String = defaultPath()) throws -> LoadedConfig {
+    public static func load(path: String = defaultPath()) throws -> LoadedConfig {
         try validateConfigPath(path)
         guard FileManager.default.fileExists(atPath: path) else {
             throw KeyrouteError.config("missing config file: \(path)")
@@ -62,11 +61,11 @@ enum ConfigLoader {
     }
 }
 
-struct LoadedConfig {
-    let path: String
-    let config: KeyrouteConfig
+public struct LoadedConfig {
+    public let path: String
+    public let config: KeyrouteConfig
 
-    func resolve(_ name: String) throws -> ResolvedReference {
+    public func resolve(_ name: String) throws -> ResolvedReference {
         if let targetID = name.removingPrefix("target.") {
             guard let target = config.targetMap[targetID] else {
                 throw unknownTarget(targetID)
@@ -96,7 +95,7 @@ struct LoadedConfig {
         throw KeyrouteError.notFound("unknown target, profile, or alias '\(name)'. Valid names: \(validNames().joined(separator: ", "))")
     }
 
-    func resolveTarget(_ name: String) throws -> (String, TargetConfig) {
+    public func resolveTarget(_ name: String) throws -> (String, TargetConfig) {
         switch try resolve(name) {
         case let .target(id, config):
             return (id, config)
@@ -105,7 +104,7 @@ struct LoadedConfig {
         }
     }
 
-    func resolveProfile(_ name: String) throws -> (String, ProfileConfig) {
+    public func resolveProfile(_ name: String) throws -> (String, ProfileConfig) {
         switch try resolve(name) {
         case let .profile(id, config):
             return (id, config)
@@ -114,7 +113,7 @@ struct LoadedConfig {
         }
     }
 
-    func validate() throws {
+    public func validate() throws {
         let targetNames = Set(config.targetMap.keys)
         let profileNames = Set(config.profileMap.keys)
         let aliasNames = Set(config.aliasMap.keys)
@@ -141,7 +140,7 @@ struct LoadedConfig {
         }
     }
 
-    func validNames() -> [String] {
+    public func validNames() -> [String] {
         (Array(config.targetMap.keys) + Array(config.profileMap.keys) + Array(config.aliasMap.keys)).sorted()
     }
 
@@ -224,7 +223,7 @@ struct LoadedConfig {
     }
 }
 
-enum ResolvedReference {
+public enum ResolvedReference {
     case target(id: String, config: TargetConfig)
     case profile(id: String, config: ProfileConfig)
 }

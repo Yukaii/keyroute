@@ -1,5 +1,5 @@
 import XCTest
-@testable import keyroute
+@testable import KeyrouteCore
 
 final class TargetConfigTests: XCTestCase {
     func testDecodesKnownAndCustomFields() throws {
@@ -30,5 +30,11 @@ final class TargetConfigTests: XCTestCase {
         }
         XCTAssertEqual(nested["enabled"]?.boolValue, true)
         XCTAssertEqual(nested["count"]?.intValue, 2)
+    }
+
+    func testStringArrayValueRequiresAllStrings() {
+        let value = ConfigValue.array([.string("--flag"), .int(1)])
+
+        XCTAssertNil(value.stringArrayValue)
     }
 }

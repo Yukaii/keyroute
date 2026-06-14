@@ -1,6 +1,6 @@
 import Foundation
 
-enum ExitCode: Equatable {
+public enum ExitCode: Equatable {
     case success
     case general
     case config
@@ -10,7 +10,7 @@ enum ExitCode: Equatable {
     case activeProfileMissing
     case raw(Int)
 
-    var value: Int32 {
+    public var value: Int32 {
         switch self {
         case .success: 0
         case .general: 1
@@ -24,7 +24,7 @@ enum ExitCode: Equatable {
     }
 }
 
-enum KeyrouteError: Error, CustomStringConvertible {
+public enum KeyrouteError: Error, CustomStringConvertible {
     case general(String)
     case config(String)
     case notFound(String)
@@ -32,7 +32,7 @@ enum KeyrouteError: Error, CustomStringConvertible {
     case permissionDenied(String)
     case activeProfileMissing(String)
 
-    var description: String {
+    public var description: String {
         switch self {
         case let .general(message),
              let .config(message),
@@ -44,7 +44,7 @@ enum KeyrouteError: Error, CustomStringConvertible {
         }
     }
 
-    var exitCode: ExitCode {
+    public var exitCode: ExitCode {
         switch self {
         case .general: .general
         case .config: .config
@@ -56,12 +56,12 @@ enum KeyrouteError: Error, CustomStringConvertible {
     }
 }
 
-func fail(_ message: String, code: ExitCode) -> Never {
+public func fail(_ message: String, code: ExitCode) -> Never {
     fputs("keyroute: \(message)\n", stderr)
     Foundation.exit(code.value)
 }
 
-func fail(_ error: Error) -> Never {
+public func fail(_ error: Error) -> Never {
     if let keyrouteError = error as? KeyrouteError {
         fail(keyrouteError.description, code: keyrouteError.exitCode)
     }

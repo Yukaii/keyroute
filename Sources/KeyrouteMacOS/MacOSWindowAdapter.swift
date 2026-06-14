@@ -2,9 +2,12 @@
 import AppKit
 import ApplicationServices
 import Foundation
+import KeyrouteCore
 
-struct MacOSWindowAdapter: Adapter {
-    func activate(targetID: String, target: TargetConfig, context: RuntimeContext) -> AdapterResult {
+public struct MacOSWindowAdapter: Adapter {
+    public init() {}
+
+    public func activate(targetID: String, target: TargetConfig, context: RuntimeContext) -> AdapterResult {
         guard let bundleID = target.app, !bundleID.isEmpty else {
             return .error("macos-window target '\(targetID)' requires 'app'")
         }
@@ -72,9 +75,12 @@ struct MacOSWindowAdapter: Adapter {
 }
 #else
 import Foundation
+import KeyrouteCore
 
-struct MacOSWindowAdapter: Adapter {
-    func activate(targetID: String, target: TargetConfig, context: RuntimeContext) -> AdapterResult {
+public struct MacOSWindowAdapter: Adapter {
+    public init() {}
+
+    public func activate(targetID: String, target: TargetConfig, context: RuntimeContext) -> AdapterResult {
         .error("macos-window target '\(targetID)' is only supported on macOS", exitCode: .config)
     }
 }

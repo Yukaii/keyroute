@@ -16,7 +16,7 @@ safe to depend on.
 
 ## `tmux`
 
-Source: `Sources/keyroute/TmuxAdapter.swift`
+Source: `Sources/KeyrouteTmux/TmuxAdapter.swift`
 
 Implemented:
 
@@ -24,7 +24,8 @@ Implemented:
 - Checks session existence with `tmux has-session`.
 - Creates missing sessions when `create: true`.
 - Uses `cwd` when creating a new session.
-- Activates the configured host app by bundle id when `app` is set.
+- On macOS, activates the configured host app by bundle id when `app` is set.
+- On non-macOS platforms, ignores `app` and reports that in dry-run output.
 - Switches an attached client with `tmux switch-client`.
 - Supports `--dry-run`.
 - Supports `--quiet` by suppressing command output.
@@ -39,7 +40,7 @@ Known gaps:
 
 ## `command`
 
-Source: `Sources/keyroute/CommandAdapter.swift`
+Source: `Sources/KeyrouteCore/CommandAdapter.swift`
 
 Implemented:
 
@@ -58,7 +59,7 @@ Known gaps:
 
 ## `external`
 
-Source: `Sources/keyroute/ExternalAdapter.swift`
+Source: `Sources/KeyrouteCore/ExternalAdapter.swift`
 
 Implemented:
 
@@ -72,6 +73,8 @@ Implemented:
   `KEYROUTE_VERBOSE`, and `KEYROUTE_QUIET`.
 - Maps exit code `0` to success, `3` to not found, `5` to permission denied, and
   other non-zero codes to adapter errors.
+- Supports structured JSON output with `status`, `message`, and optional
+  `exitCode`.
 - Captures stdout/stderr so quiet mode does not flash terminal output.
 
 Known gaps:
@@ -79,12 +82,11 @@ Known gaps:
 - `--dry-run` does not execute the script. This is intentional for now, but it
   means custom scripts cannot produce their own dry-run details.
 - Does not provide timeout handling.
-- Does not validate a script's JSON output because external adapters currently
-  communicate result status by exit code plus stdout/stderr.
+- Does not provide a schema version for structured JSON output yet.
 
 ## `macos-window`
 
-Source: `Sources/keyroute/MacOSWindowAdapter.swift`
+Source: `Sources/KeyrouteMacOS/MacOSWindowAdapter.swift`
 
 Implemented:
 
@@ -111,7 +113,7 @@ Known gaps:
 
 ## `chromium`
 
-Source: `Sources/keyroute/ChromiumAdapter.swift`
+Source: `Sources/KeyrouteCore/ChromiumAdapter.swift`
 
 Implemented:
 

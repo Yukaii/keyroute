@@ -1,13 +1,21 @@
 import Foundation
 
-struct CommandRunResult {
-    let status: Int32
-    let stdout: Data
-    let stderr: Data
+public struct CommandRunResult {
+    public let status: Int32
+    public let stdout: Data
+    public let stderr: Data
+
+    public init(status: Int32, stdout: Data, stderr: Data) {
+        self.status = status
+        self.stdout = stdout
+        self.stderr = stderr
+    }
 }
 
-struct CommandRunner {
-    func run(
+public struct CommandRunner {
+    public init() {}
+
+    public func run(
         executable: String,
         arguments: [String] = [],
         cwd: String? = nil,
@@ -27,7 +35,7 @@ struct CommandRunner {
         ).status
     }
 
-    func runDetailed(
+    public func runDetailed(
         executable: String,
         arguments: [String] = [],
         cwd: String? = nil,

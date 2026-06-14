@@ -1,6 +1,6 @@
 import Foundation
 
-enum ConfigValue: Codable, Equatable {
+public enum ConfigValue: Codable, Equatable {
     case string(String)
     case bool(Bool)
     case int(Int)
@@ -9,7 +9,7 @@ enum ConfigValue: Codable, Equatable {
     case object([String: ConfigValue])
     case null
 
-    init(from decoder: Decoder) throws {
+    public init(from decoder: Decoder) throws {
         let container = try decoder.singleValueContainer()
         if container.decodeNil() {
             self = .null
@@ -30,7 +30,7 @@ enum ConfigValue: Codable, Equatable {
         }
     }
 
-    func encode(to encoder: Encoder) throws {
+    public func encode(to encoder: Encoder) throws {
         var container = encoder.singleValueContainer()
         switch self {
         case let .string(value):
@@ -50,27 +50,32 @@ enum ConfigValue: Codable, Equatable {
         }
     }
 
-    var stringValue: String? {
+    public var stringValue: String? {
         if case let .string(value) = self { return value }
         return nil
     }
 
-    var boolValue: Bool? {
+    public var boolValue: Bool? {
         if case let .bool(value) = self { return value }
         return nil
     }
 
-    var intValue: Int? {
+    public var intValue: Int? {
         if case let .int(value) = self { return value }
         return nil
     }
 
-    var stringArrayValue: [String]? {
+    public var stringArrayValue: [String]? {
         guard case let .array(values) = self else { return nil }
-        return values.map(\.stringValue).compactMap { $0 }
+        var result: [String] = []
+        for value in values {
+            guard let string = value.stringValue else { return nil }
+            result.append(string)
+        }
+        return result
     }
 
-    var stringMapValue: [String: String]? {
+    public var stringMapValue: [String: String]? {
         guard case let .object(values) = self else { return nil }
         var result: [String: String] = [:]
         for (key, value) in values {

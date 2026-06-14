@@ -1,6 +1,7 @@
 # Keyroute
 
-Keyroute is a deterministic session and window router for macOS.
+Keyroute is a deterministic session and window router with a portable Swift
+core and optional platform adapters.
 
 It is designed to sit underneath input tools like BetterTouchTool, Leader Key,
 Karabiner, Raycast, Alfred, or shell scripts. Those tools own key gestures and
@@ -41,9 +42,20 @@ Run commands from the package checkout:
 swift run keyroute list
 swift run keyroute inspect tmux.project-alpha
 swift run keyroute go tmux.project-alpha --dry-run
+swift run keyroute example list
 ```
 
-The MVP reads config from `~/.config/keyroute/config.yaml`.
+The CLI reads config from `~/.config/keyroute/config.yaml`, or from
+`$XDG_CONFIG_HOME/keyroute/config.yaml` when `XDG_CONFIG_HOME` is set.
+
+Package layout:
+
+```text
+KeyrouteCore   portable resolver, config, state, and external adapters
+KeyrouteTmux   tmux adapter
+KeyrouteMacOS  AppKit and Accessibility adapters
+keyroute       executable CLI and adapter registry
+```
 
 ## License
 
