@@ -16,6 +16,10 @@ let package = Package(
         .executableTarget(
             name: "keyroute",
             dependencies: ["Yams"]
+        ),
+        .testTarget(
+            name: "keyrouteTests",
+            dependencies: ["keyroute"]
         )
     ]
 )
